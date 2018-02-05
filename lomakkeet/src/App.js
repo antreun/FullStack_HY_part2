@@ -1,7 +1,9 @@
-import React from 'react';
-import Person from './components/Person';
-import Filter from './components/Filter';
-import NewPerson from './components/NewPerson';
+import React from 'react'
+import axios from 'axios'
+import Person from './components/Person'
+import Filter from './components/Filter'
+import NewPerson from './components/NewPerson'
+import personService from './services/persons'
 
 class App extends React.Component {
   constructor(props) {
@@ -9,15 +11,20 @@ class App extends React.Component {
     this.state = {
       persons: [
         { name: 'Arto Hellas', number: '040-123456' },
-        { name: 'Martti Tienari', number: '040-123456' },
-        { name: 'Arto Järvinen', number: '040-123456' },
-        { name: 'Lea Kutvonen', number: '040-123456' }
       ],
       newName: '',
       newNumber: '',
       filter: ''
     }
   }
+
+  componentDidMount() {
+    personService
+      .getAll()
+      .then(response => {
+        this.setState({persons: response.data})
+      })
+}
 
   handleNameChange = (event) => {
     //console.log(event.target.value)
@@ -33,12 +40,17 @@ class App extends React.Component {
     this.setState({ filter: event.target.value })
   }
 
+  removePerson = () => {
+    console.log("removing ")
+  }
+
+
   addName = (event) => {
     event.preventDefault()
     const personObject = {
       name: this.state.newName,
       number: this.state.newNumber,
-      id: this.state.persons.length + 1
+      //id: this.state.persons.length + 1
     }
 
     //tarkastetaan onko nimi jo listassa
@@ -47,16 +59,18 @@ class App extends React.Component {
       alert("Nimi " + personObject.name + " on jo luettelossa!")
     }
     else {
-      const persons = this.state.persons.concat(personObject)
-      this.setState({
-        persons: persons,
-        newName: '',
-        newNumber: '',
-        filter: ''
-      })
+      personService
+        .create(personObject)
+
+        .then(response => {
+          this.setState({
+            persons: this.state.persons.concat(response.data),
+            newName: '',
+            newNumber: '',
+            filter: ''
+          })
+        })
     }
-
-
   }
 
   render() {
@@ -75,7 +89,8 @@ class App extends React.Component {
           handleNumberChange={this.handleNumberChange} />
         <h2>Numerot</h2>
         <table>
-          {filteredPersons.map(person => <Person key={person.name} person={person} />)}
+          {filteredPersons.map(person => <Person removePerson={this.removePerson}
+              key={person.name} person={person} />)}
         </table>
       </div>
 
